@@ -1,6 +1,6 @@
 /** Branding/config for this repository's product. */
 export const APP = {
-  name: "Adaptive Learning Studio (GIBC V2)",
-  tagline: "An adaptive AI learning engine with personalized learning paths.",
-  build: "scaffold",
+  name: "Adaptive Learning Studio",
+  tagline: "A learning engine that adapts to you",
+  build: "product",
 };

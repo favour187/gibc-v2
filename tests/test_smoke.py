@@ -12,9 +12,10 @@ def test_health(client):
 
 
 def test_feature_router(client):
-    res = client.get("/api/learning/status")
+    data = create_user(client, email="smoke@example.com")
+    res = client.get("/api/learning/overview", headers=auth_headers(data["token"]))
     assert res.status_code == 200
-    assert res.json()["feature"] == "learning"
+    assert res.json()["curriculum"]["total_skills"] > 0
 
 
 def test_auth_flow(client):
