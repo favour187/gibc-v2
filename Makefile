@@ -1,19 +1,13 @@
 .PHONY: install dev test web-dev web-build docker
-
-install:            ## Install backend deps (dev)
+install:
 	pip install -e ".[dev]"
-
-dev:                ## Run the API with auto-reload
+dev:
 	uvicorn app.main:app --reload --port 8000
-
-test:               ## Backend tests
+test:
 	python -m pytest
-
-web-dev:            ## Frontend dev server (proxies /api -> :8000)
+web-dev:
 	cd web && npm install && npm run dev
-
-web-build:          ## Type-check + build the frontend
+web-build:
 	cd web && npm install && npm run build
-
-docker:             ## Build & run the production container
+docker:
 	docker compose up --build

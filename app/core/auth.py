@@ -1,43 +1,30 @@
-"""Authentication: users, hashed passwords, opaque session tokens.
-
-- Passwords: PBKDF2-HMAC-SHA256 (stdlib `hashlib`, no extra dependency),
-  per-user random salt, configurable iteration count.
-- Sessions: random 256-bit tokens; only the SHA-256 hash is stored, so a
-  database leak does not leak usable tokens. Tokens expire.
-- Transport: `Authorization: Bearer <token>` header. (A production app would
-  use HttpOnly secure cookies; the bearer header keeps the demo simple.)
-"""
-
 from __future__ import annotations
-
 import base64
 import hashlib
 import hmac
 import secrets
 from datetime import datetime, timedelta
-
 import uuid as uuid_mod
-
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import ForeignKey, String, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
-
 from .config import Settings
 from .db import Base, get_db, iso_utc, session_scope, TimestampsMixin, UUIDMixin, utcnow
-from .errors import AuthenticationError, ConflictError, PermissionDeniedError, ValidationFailedError
+from .errors import (
+    AuthenticationError,
+    ConflictError,
+    PermissionDeniedError,
+    ValidationFailedError,
+)
 from .state import get_app_state
 from .logging import get_logger
 
 logger = get_logger("app.auth")
-
 _ALGO = "pbkdf2_sha256"
 _HEADER_PREFIX = "Bearer "
 
 
-# --------------------------------------------------------------------------
-# Password hashing (stdlib)
-# --------------------------------------------------------------------------
 def hash_password(password: str, *, iterations: int | None = None) -> str:
     if iterations is None:
         try:
@@ -46,7 +33,7 @@ def hash_password(password: str, *, iterations: int | None = None) -> str:
             iterations = Settings.password_iterations
     salt = secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
-    return f"{_ALGO}${iterations}${base64.b64encode(salt).decode()}${base64.b64encode(digest).decode()}"
+    return f"{_ALGO }${iterations }${base64 .b64encode (salt ).decode ()}${base64 .b64encode (digest ).decode ()}"
 
 
 def verify_password(password: str, stored: str) -> bool:
@@ -59,16 +46,14 @@ def verify_password(password: str, stored: str) -> bool:
         expected = base64.b64decode(digest_b64)
     except (ValueError, TypeError):
         return False
-    candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+    candidate = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, iterations
+    )
     return hmac.compare_digest(candidate, expected)
 
 
-# --------------------------------------------------------------------------
-# Models
-# --------------------------------------------------------------------------
 class User(UUIDMixin, TimestampsMixin, Base):
     __tablename__ = "users"
-
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
     password_hash: Mapped[str] = mapped_column(String(512))
@@ -85,7 +70,6 @@ class User(UUIDMixin, TimestampsMixin, Base):
 
 class UserSession(UUIDMixin, Base):
     __tablename__ = "user_sessions"
-
     user_id: Mapped[uuid_mod.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(index=True)
@@ -95,9 +79,6 @@ def sha256_hex(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-# --------------------------------------------------------------------------
-# Schemas
-# --------------------------------------------------------------------------
 _EMAIL_RE = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
 
@@ -139,17 +120,18 @@ def _purge_expired_sessions(session: Session) -> None:
     session.execute(delete(UserSession).where(UserSession.expires_at < utcnow()))
 
 
-# --------------------------------------------------------------------------
-# Business logic
-# --------------------------------------------------------------------------
-def register_user(
-    db: Session, email: str, display_name: str, password: str
-) -> User:
+def register_user(db: Session, email: str, display_name: str, password: str) -> User:
     email = email.strip().lower()
     existing = db.scalar(select(User).where(User.email == email))
     if existing:
-        raise ConflictError("An account with this email already exists.", code="email_exists")
-    user = User(email=email, display_name=display_name.strip(), password_hash=hash_password(password))
+        raise ConflictError(
+            "An account with this email already exists.", code="email_exists"
+        )
+    user = User(
+        email=email,
+        display_name=display_name.strip(),
+        password_hash=hash_password(password),
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -160,7 +142,9 @@ def register_user(
 def authenticate(db: Session, email: str, password: str) -> User:
     user = db.scalar(select(User).where(User.email == email.strip().lower()))
     if user is None or not verify_password(password, user.password_hash):
-        raise AuthenticationError("Invalid email or password.", code="invalid_credentials")
+        raise AuthenticationError(
+            "Invalid email or password.", code="invalid_credentials"
+        )
     if not user.is_active:
         raise PermissionDeniedError("This account is disabled.")
     return user
@@ -171,20 +155,31 @@ def create_session(db: Session, user: User) -> tuple[str, datetime]:
     settings: Settings = get_app_state().settings
     token = _make_session_token()
     expiry = _session_expiry(settings)
-    db.add(UserSession(user_id=user.id, token_hash=sha256_hex(token), expires_at=expiry))
+    db.add(
+        UserSession(user_id=user.id, token_hash=sha256_hex(token), expires_at=expiry)
+    )
     db.commit()
     return token, expiry
 
 
 def resolve_token(db: Session, token: str) -> User:
     if not token:
-        raise AuthenticationError("Not authenticated. Provide a bearer token.", code="unauthenticated")
-    row = db.scalar(select(UserSession).where(UserSession.token_hash == sha256_hex(token)))
+        raise AuthenticationError(
+            "Not authenticated. Provide a bearer token.", code="unauthenticated"
+        )
+    row = db.scalar(
+        select(UserSession).where(UserSession.token_hash == sha256_hex(token))
+    )
     if row is None or row.expires_at < utcnow():
-        raise AuthenticationError("Session is invalid or expired. Please log in again.", code="session_expired")
+        raise AuthenticationError(
+            "Session is invalid or expired. Please log in again.",
+            code="session_expired",
+        )
     user = db.get(User, row.user_id)
     if user is None or not user.is_active:
-        raise AuthenticationError("Account not found or disabled.", code="unauthenticated")
+        raise AuthenticationError(
+            "Account not found or disabled.", code="unauthenticated"
+        )
     return user
 
 
@@ -195,13 +190,10 @@ def revoke_session(db: Session, token: str) -> None:
     db.commit()
 
 
-# --------------------------------------------------------------------------
-# FastAPI dependencies
-# --------------------------------------------------------------------------
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     header = request.headers.get("authorization", "")
     if header.startswith(_HEADER_PREFIX):
-        token = header[len(_HEADER_PREFIX):].strip()
+        token = header[len(_HEADER_PREFIX) :].strip()
     else:
         token = ""
     return resolve_token(db, token)
@@ -213,13 +205,7 @@ def require_active_user(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-# --------------------------------------------------------------------------
-# Router
-# --------------------------------------------------------------------------
 def build_auth_router() -> APIRouter:
-    """Returns the `/auth` router. Kept as a factory so each competition repo
-    can mount it on its own prefix."""
-
     def _user_out(user: User) -> UserOut:
         return UserOut(
             id=str(user.id),
@@ -234,19 +220,23 @@ def build_auth_router() -> APIRouter:
     def register(payload: RegisterIn, db: Session = Depends(get_db)) -> SessionOut:
         user = register_user(db, payload.email, payload.display_name, payload.password)
         token, expiry = create_session(db, user)
-        return SessionOut(token=token, expires_at=iso_utc(expiry) or "", user=_user_out(user))
+        return SessionOut(
+            token=token, expires_at=iso_utc(expiry) or "", user=_user_out(user)
+        )
 
     @router.post("/login", response_model=SessionOut)
     def login(payload: LoginIn, db: Session = Depends(get_db)) -> SessionOut:
         user = authenticate(db, payload.email, payload.password)
         token, expiry = create_session(db, user)
-        return SessionOut(token=token, expires_at=iso_utc(expiry) or "", user=_user_out(user))
+        return SessionOut(
+            token=token, expires_at=iso_utc(expiry) or "", user=_user_out(user)
+        )
 
     @router.post("/logout", status_code=204)
     def logout(request: Request, db: Session = Depends(get_db)) -> None:
         header = request.headers.get("authorization", "")
         if header.startswith(_HEADER_PREFIX):
-            revoke_session(db, header[len(_HEADER_PREFIX):].strip())
+            revoke_session(db, header[len(_HEADER_PREFIX) :].strip())
 
     @router.get("/me", response_model=UserOut)
     def me(user: User = Depends(require_active_user)) -> UserOut:
@@ -256,7 +246,6 @@ def build_auth_router() -> APIRouter:
 
 
 def bootstrap_demo_user() -> None:
-    """Create a well-known demo account in development for easy testing."""
     settings: Settings = get_app_state().settings
     if settings.environment != "development" or not settings.auto_create_tables:
         return

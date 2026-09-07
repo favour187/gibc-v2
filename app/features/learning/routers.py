@@ -1,11 +1,7 @@
-"""Adaptive Learning Studio API routes (GIBC V2, Track 03)."""
-
 from __future__ import annotations
-
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-
 from app.core.auth import User, get_current_user
 from app.core.db import get_db
 from app.core.errors import NotFoundError, ValidationFailedError
@@ -74,7 +70,12 @@ def finish(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    return service.finish_session(db, str(user.id), question_count=payload.question_count, correct_count=payload.correct_count)
+    return service.finish_session(
+        db,
+        str(user.id),
+        question_count=payload.question_count,
+        correct_count=payload.correct_count,
+    )
 
 
 @router.post("/tutor")
@@ -83,7 +84,9 @@ def tutor(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    return service.tutor(db, str(user.id), message=payload.message, question_id=payload.question_id)
+    return service.tutor(
+        db, str(user.id), message=payload.message, question_id=payload.question_id
+    )
 
 
 @router.patch("/target")

@@ -5,7 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gibc-v2"
 version = "0.1.0"
-description = "Global Innovation Build Challenge V2 (Devpost) submission repository — An adaptive AI learning engine with personalized learning paths."
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115,<1",

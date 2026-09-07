@@ -1,5 +1,3 @@
-"""Smoke tests: the scaffold's wiring works (health, auth, AI, feature router)."""
-
 from app.core.testing import auth_headers, create_user
 
 
@@ -30,4 +28,4 @@ def test_ai_ping(client):
     assert res.status_code == 200
     body = res.json()
     assert body["text"]
-    assert body["provider"] == "local-demo"  # test env has no key
+    assert body["provider"] == "local-demo"

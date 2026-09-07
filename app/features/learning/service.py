@@ -1,13 +1,8 @@
-"""Application service: orchestrates engine + persistence for the API."""
-
 from __future__ import annotations
-
 from dataclasses import asdict
 from datetime import date
 from typing import Any
-
 from sqlalchemy.orm import Session
-
 from app.core.ai import AIGateway, get_gateway
 from app.features.learning import ai_skills
 from app.features.learning.content import SKILLS, question_by_id
@@ -41,13 +36,18 @@ def overview(db: Session, user_id: str) -> dict[str, Any]:
     states = _state_map(db, profile)
     order = topological_order(SKILLS)
     front = frontier(SKILLS, states)
-    next_skill = next_best_skill(SKILLS, states, target_skill=profile.target_skill or None)
+    next_skill = next_best_skill(
+        SKILLS, states, target_skill=profile.target_skill or None
+    )
     return {
         "profile": profile.to_dict(),
         "curriculum": {
             "total_skills": len(SKILLS),
             "tracks": sorted({s.track for s in SKILLS.values()}),
-            "skills": [asdict(s) | {"prerequisites": list(s.prerequisites)} for s in SKILLS.values()],
+            "skills": [
+                asdict(s) | {"prerequisites": list(s.prerequisites)}
+                for s in SKILLS.values()
+            ],
             "order": order,
         },
         "progress": path_progress(SKILLS, states),
@@ -55,15 +55,27 @@ def overview(db: Session, user_id: str) -> dict[str, Any]:
         "next_skill": next_skill,
         "next_skill_title": SKILLS[next_skill].title if next_skill else None,
         "target_skill": profile.target_skill or None,
-        "target_reached": bool(profile.target_skill and states.get(profile.target_skill) and states[profile.target_skill].mastered),
-        "due_count": len([s for s in states.values() if not s.mastered and s.due_date <= date.today()]),
+        "target_reached": bool(
+            profile.target_skill
+            and states.get(profile.target_skill)
+            and states[profile.target_skill].mastered
+        ),
+        "due_count": len(
+            [
+                s
+                for s in states.values()
+                if not s.mastered and s.due_date <= date.today()
+            ]
+        ),
         "review_queue": review_queue_size(db, profile.id),
         "streak": study_streak(db, profile.id),
         "state_map": {sid: st.to_dict() for sid, st in states.items()},
     }
 
 
-def new_session(db: Session, user_id: str, *, target_skill: str | None = None) -> dict[str, Any]:
+def new_session(
+    db: Session, user_id: str, *, target_skill: str | None = None
+) -> dict[str, Any]:
     profile = get_or_create_profile(db, user_id)
     states = _state_map(db, profile)
     session = assemble_session(
@@ -78,14 +90,23 @@ def new_session(db: Session, user_id: str, *, target_skill: str | None = None) -
     }
 
 
-def grade(db: Session, user_id: str, *, question_id: str, chosen_index: int, self_rating: int | None) -> dict[str, Any]:
+def grade(
+    db: Session,
+    user_id: str,
+    *,
+    question_id: str,
+    chosen_index: int,
+    self_rating: int | None,
+) -> dict[str, Any]:
     profile = get_or_create_profile(db, user_id)
     question = question_by_id(question_id)
     if question is None:
         raise ValueError("Unknown question_id")
     states = _state_map(db, profile)
     state = states.get(question.skill_id, SkillState(skill_id=question.skill_id))
-    record = grade_answer(state, question, chosen_index=chosen_index, self_rating=self_rating)
+    record = grade_answer(
+        state, question, chosen_index=chosen_index, self_rating=self_rating
+    )
     upsert_progress(db, profile.id, state)
     return {
         "record": record.to_dict(),
@@ -100,17 +121,30 @@ def grade(db: Session, user_id: str, *, question_id: str, chosen_index: int, sel
     }
 
 
-def finish_session(db: Session, user_id: str, *, question_count: int, correct_count: int) -> dict[str, Any]:
+def finish_session(
+    db: Session, user_id: str, *, question_count: int, correct_count: int
+) -> dict[str, Any]:
     profile = get_or_create_profile(db, user_id)
     session = record_session(
         db,
         str(profile.id),
-        {"question_count": question_count, "correct_count": correct_count, "sources": []},
+        {
+            "question_count": question_count,
+            "correct_count": correct_count,
+            "sources": [],
+        },
     )
     return session.to_dict()
 
 
-def tutor(db: Session, user_id: str, *, message: str, question_id: str | None = None, gateway: AIGateway | None = None) -> dict[str, Any]:
+def tutor(
+    db: Session,
+    user_id: str,
+    *,
+    message: str,
+    question_id: str | None = None,
+    gateway: AIGateway | None = None,
+) -> dict[str, Any]:
     gateway = gateway or get_gateway()
     profile = get_or_create_profile(db, user_id)
     states = _state_map(db, profile)

@@ -1,5 +1,3 @@
-"""Competition-specific settings (extends the shared foundation)."""
-
 from app.core.config import Settings
 
 

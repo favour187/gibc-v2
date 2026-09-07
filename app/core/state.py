@@ -1,17 +1,8 @@
-"""Process-wide application state (engine, session factory, settings).
-
-Kept in its own module so `http` and `auth` can both import it without a
-circular dependency.
-"""
-
 from __future__ import annotations
-
 import time
 from typing import Any
-
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
-
 from .config import Settings
 from .db import make_engine, make_session_factory
 
@@ -33,11 +24,13 @@ class AppState:
             "version": self.settings.app_version,
             "environment": self.settings.environment,
             "ai_mode": self.settings.ai_mode,
-            "database": "sqlite" if self.settings.database_url.startswith("sqlite") else "other",
+            "database": (
+                "sqlite" if self.settings.database_url.startswith("sqlite") else "other"
+            ),
         }
 
 
-app_state: AppState | None = None  # populated by set_app_state()
+app_state: AppState | None = None
 
 
 def set_app_state(state: AppState) -> None:
@@ -46,6 +39,6 @@ def set_app_state(state: AppState) -> None:
 
 
 def get_app_state() -> AppState:
-    if app_state is None:  # pragma: no cover - defensive
+    if app_state is None:
         raise RuntimeError("Application state is not initialised yet.")
     return app_state

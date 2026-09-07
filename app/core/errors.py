@@ -1,29 +1,16 @@
-"""Application error hierarchy + FastAPI exception handlers.
-
-All errors are returned as a consistent JSON envelope:
-    {"error": {"code": "...", "message": "...", "details": ..., "request_id": ...}}
-"""
-
 from __future__ import annotations
-
 from typing import Any
-
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
 from .logging import get_logger
 
 logger = get_logger("app.errors")
-
-# HTTP statuses that should not leak internal detail even in debug mode.
 _SENSITIVE = {status.HTTP_500_INTERNAL_SERVER_ERROR}
 
 
 class AppError(Exception):
-    """Base class for expected, client-facing application errors."""
-
     status_code: int = status.HTTP_400_BAD_REQUEST
     code: str = "app_error"
 
@@ -116,7 +103,9 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
         )
 
     @app.exception_handler(RequestValidationError)
-    async def handle_validation(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def handle_validation(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content=error_envelope(
@@ -128,7 +117,9 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def handle_http(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    async def handle_http(
+        request: Request, exc: StarletteHTTPException
+    ) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
             content=error_envelope(
@@ -144,7 +135,7 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
         logger.exception("Unhandled error (request_id=%s)", request_id)
         message = "Internal server error."
         if debug:
-            message = f"{type(exc).__name__}: {exc}"
+            message = f"{type (exc ).__name__ }: {exc }"
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=error_envelope("internal_error", message, request_id=request_id),

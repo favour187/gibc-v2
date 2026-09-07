@@ -1,12 +1,8 @@
-"""Session assembly + grading pipeline for Adaptive Learning Studio."""
-
 from __future__ import annotations
-
 import random
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
-
 from app.features.learning.core import (
     Grade,
     Question,
@@ -27,7 +23,7 @@ SESSION_SIZE = 8
 @dataclass(slots=True)
 class SessionQuestion:
     question: Question
-    source: str  # "review" | "weak" | "new"
+    source: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -59,23 +55,17 @@ def assemble_session(
     size: int = SESSION_SIZE,
     today: date | None = None,
 ) -> Session:
-    """Build a mixed session: due reviews, weak skills, then new material."""
     rng = rng or random.Random()
     today = today or date.today()
-
-    # 1. Reviews that are due (mastery reinforcement).
     due = [sid for sid in due_skills(states, today=today) if sid in skills]
-    # 2. Weak frontier (biggest learning gain).
     weak = [
         sid
         for sid in frontier(skills, states)
         if sid not in due and (sid not in states or states[sid].mastery < 60)
     ]
-    # 3. Any remaining frontier (fresh material).
-    fresh = [sid for sid in frontier(skills, states) if sid not in due and sid not in weak]
-
-    # 4. "Upcoming" skills: prerequisites already being studied. Keeps the
-    #    session a useful size without skipping prerequisite content.
+    fresh = [
+        sid for sid in frontier(skills, states) if sid not in due and sid not in weak
+    ]
     upcoming: list[str] = []
     from app.features.learning.core import topological_order
 
@@ -83,13 +73,13 @@ def assemble_session(
         if sid in due or sid in weak or sid in fresh:
             continue
         prereq_started = all(
-            (states.get(p) is not None and states[p].encounters > 0) for p in skills[sid].prerequisites
+            (states.get(p) is not None and states[p].encounters > 0)
+            for p in skills[sid].prerequisites
         )
         if skills[sid].prerequisites and prereq_started:
             upcoming.append(sid)
         if len(upcoming) >= size:
             break
-
     ordered = due + weak + fresh + upcoming
     pool_size = len(ordered)
     picked: list[SessionQuestion] = []
@@ -98,10 +88,13 @@ def assemble_session(
     for sid in ordered:
         if remaining <= 0:
             break
-        bank = [q for q in skills_knowledge_bank(sid) if q.question_id not in picked_ids(picked)]
+        bank = [
+            q
+            for q in skills_knowledge_bank(sid)
+            if q.question_id not in picked_ids(picked)
+        ]
         if not bank:
             continue
-        # Small pools → 2-3 questions per skill; due reviews get priority too.
         per_skill = 3 if pool_size <= 2 else (2 if sid in due else 1)
         take = min(len(bank), per_skill, remaining)
         chosen = rng.sample(bank, take)
@@ -110,7 +103,6 @@ def assemble_session(
             picked.append(SessionQuestion(q, source))
         used_skills.append(sid)
         remaining -= take
-
     titles = {sid: skills[sid].title for sid in used_skills}
     return Session(questions=picked, skill_title=titles)
 
@@ -127,8 +119,6 @@ def skills_knowledge_bank(skill_id: str) -> list[Question]:
 
 @dataclass(slots=True)
 class AnswerRecord:
-    """Outcome of one answered question before persistence."""
-
     question_id: str
     skill_id: str
     correct: bool
@@ -161,7 +151,6 @@ def grade_answer(
     self_rating: int | None = None,
     today: date | None = None,
 ) -> AnswerRecord:
-    """Apply a full mastery + scheduling update for one answer."""
     correct = chosen_index == question.answer_index
     grade = grade_for_answer(correct, self_rating=self_rating)
     theta_before = state.theta

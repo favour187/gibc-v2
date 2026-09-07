@@ -1,7 +1,4 @@
-"""Structured logging setup (JSON in production, readable in development)."""
-
 from __future__ import annotations
-
 import logging
 import sys
 from typing import Any
@@ -11,8 +8,6 @@ _FIELD_ORDER = ("ts", "level", "logger", "message")
 
 
 class JsonFormatter(logging.Formatter):
-    """Minimal JSON log formatter (stdlib only, no extra dependency)."""
-
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {
             "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
@@ -35,12 +30,10 @@ def _json_dumps(payload: dict[str, Any]) -> str:
 
 
 def setup_logging(*, debug: bool = False, json_logs: bool = False) -> None:
-    """Configure the root logger once. Safe to call repeatedly."""
     root = logging.getLogger()
     if getattr(root, "_hackathon_configured", False):
         root.setLevel(logging.DEBUG if debug else logging.INFO)
         return
-
     handler = logging.StreamHandler(sys.stdout)
     if json_logs:
         handler.setFormatter(JsonFormatter())
@@ -48,7 +41,6 @@ def setup_logging(*, debug: bool = False, json_logs: bool = False) -> None:
         handler.setFormatter(logging.Formatter(_FORMAT))
     root.handlers = [handler]
     root.setLevel(logging.DEBUG if debug else logging.INFO)
-    # Keep noisy third-party loggers down.
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)

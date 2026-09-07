@@ -1,40 +1,27 @@
-"""SQLAlchemy 2.0 database layer: engine/session factory, base classes, mixins."""
-
 from __future__ import annotations
-
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-
 from sqlalchemy import DateTime, create_engine, event, func
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
-
 from .logging import get_logger
 
 logger = get_logger("app.db")
 
 
 def utcnow() -> datetime:
-    """UTC now as a *naive* datetime.
-
-    SQLite has no timezone support and returns naive datetimes on read, while
-    Postgres would return aware ones. Storing naive UTC consistently keeps
-    comparisons and defaults portable across both backends. Serialize with
-    `iso_utc()` to present ISO-8601 with a Z suffix.
-    """
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def iso_utc(dt: datetime | None) -> str | None:
-    """ISO-8601 string with explicit UTC marker; None-safe for serialization."""
     if dt is None:
         return None
     if dt.tzinfo is None:
         text = dt.isoformat()
-        return text if text.endswith("Z") else f"{text}Z"
+        return text if text.endswith("Z") else f"{text }Z"
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
@@ -56,7 +43,6 @@ class TimestampsMixin:
 
 
 def _ensure_sqlite_dir(database_url: str) -> None:
-    """Create the directory for a file-based SQLite database."""
     if database_url.startswith("sqlite:///"):
         path = database_url.removeprefix("sqlite:///")
         if path and path != ":memory:":
@@ -69,10 +55,10 @@ def make_engine(database_url: str, *, echo: bool = False) -> Engine:
     if database_url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
     engine = create_engine(database_url, **kwargs)
-
     if database_url.startswith("sqlite"):
+
         @event.listens_for(engine, "connect")
-        def _set_sqlite_pragma(dbapi_connection, _record):  # pragma: no cover
+        def _set_sqlite_pragma(dbapi_connection, _record):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.execute("PRAGMA journal_mode=WAL")
@@ -86,19 +72,17 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
 
 
 def init_db(engine: Engine) -> None:
-    """Create all tables. Idempotent; safe on every startup."""
-    from . import auth  # noqa: F401  (import registers models on Base)
+    from . import auth
 
     Base.metadata.create_all(engine)
     logger.info("Database tables ensured: %s", sorted(Base.metadata.tables))
 
 
 def get_db() -> Iterator[Session]:
-    """FastAPI dependency: yield a session and close it after the request."""
-    from .state import get_app_state  # local import to avoid circular imports
+    from .state import get_app_state
 
     factory = get_app_state().session_factory
-    if factory is None:  # pragma: no cover - defensive
+    if factory is None:
         raise RuntimeError("Database not initialised (session_factory is None)")
     with factory() as session:
         yield session
@@ -106,7 +90,6 @@ def get_db() -> Iterator[Session]:
 
 @contextmanager
 def session_scope(session_factory: sessionmaker[Session]) -> Iterator[Session]:
-    """Context manager for non-request code paths (scripts, tests, background)."""
     with session_factory() as session:
         try:
             yield session
