@@ -10,7 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from . import ai as ai_core
 from .auth import bootstrap_demo_user, build_auth_router
 from .config import Settings
-from .db import init_db, make_engine
+from .db import database_backend, init_db, make_engine
 from .errors import error_envelope, install_error_handlers
 from .logging import get_logger, setup_logging
 from .ratelimit import RateLimitMiddleware
@@ -83,9 +83,7 @@ def create_app(
             "version": settings.app_version,
             "environment": settings.environment,
             "ai": ai_core.get_gateway().status(),
-            "database": (
-                "sqlite" if settings.database_url.startswith("sqlite") else "other"
-            ),
+            "database": database_backend(settings.database_url),
             "uptime_seconds": get_app_state().uptime_seconds,
         }
 
@@ -150,13 +148,14 @@ def create_app(
                         return FileResponse(candidate)
                     return FileResponse(index_file)
 
-    if settings.environment == "development":
+    if settings.environment == "development" or settings.seed_demo_user:
         bootstrap_demo_user()
     logger.info(
-        "App '%s' v%s ready (env=%s, ai_mode=%s, db=sqlite)",
+        "App '%s' v%s ready (env=%s, ai_mode=%s, db=%s)",
         settings.app_name,
         settings.app_version,
         settings.environment,
         settings.ai_mode,
+        database_backend(settings.database_url),
     )
     return app

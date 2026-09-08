@@ -223,3 +223,14 @@ def test_api_session_finish(client):
     body = res.json()
     assert body["question_count"] == 5
     assert body["accuracy"] == 0.8
+
+
+def test_attempt_lookups_use_text_profile_id(client):
+    """profile_id on attempts is a String column; passing a UUID must not break on PostgreSQL."""
+    import uuid
+    from app.core.state import get_app_state
+    from app.core.db import session_scope
+    from app.features.learning.repository import study_streak
+
+    with session_scope(get_app_state().session_factory) as db:
+        assert study_streak(db, uuid.uuid4()) == 0

@@ -180,9 +180,13 @@ def record_attempt(
     return attempt
 
 
-def study_streak(db: Session, profile_id: uuid.UUID) -> int:
+def study_streak(db: Session, profile_id: uuid.UUID | str) -> int:
+    # learning_attempts.profile_id is a String column: compare as text so the query is
+    # valid on PostgreSQL as well as SQLite (which coerces silently).
     rows = db.scalars(
-        select(AttemptEntity.created_at).where(AttemptEntity.profile_id == profile_id)
+        select(AttemptEntity.created_at).where(
+            AttemptEntity.profile_id == str(profile_id)
+        )
     )
     days = {r.date() for r in rows}
     streak = 0

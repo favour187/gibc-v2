@@ -49,11 +49,31 @@ def _ensure_sqlite_dir(database_url: str) -> None:
             Path(path).parent.mkdir(parents=True, exist_ok=True)
 
 
+def normalize_database_url(database_url: str) -> str:
+    """Accept the URL formats hosted Postgres providers hand out (Neon, Render,
+    Supabase, Heroku) and pin them to the psycopg 3 driver this project ships."""
+    if database_url.startswith("postgres://"):
+        database_url = "postgresql://" + database_url[len("postgres://") :]
+    if database_url.startswith("postgresql://"):
+        database_url = "postgresql+psycopg://" + database_url[len("postgresql://") :]
+    return database_url
+
+
+def database_backend(database_url: str) -> str:
+    """Short backend label for logs / health: 'sqlite', 'postgresql', ..."""
+    return normalize_database_url(database_url).split(":", 1)[0].split("+", 1)[0]
+
+
 def make_engine(database_url: str, *, echo: bool = False) -> Engine:
+    database_url = normalize_database_url(database_url)
     _ensure_sqlite_dir(database_url)
     kwargs: dict = {"echo": echo, "future": True}
     if database_url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
+    else:
+        # Serverless Postgres (Neon, Render) suspends idle computes and drops
+        # connections; pre-ping + recycle keep the pool healthy across wake-ups.
+        kwargs.update(pool_pre_ping=True, pool_recycle=300, pool_size=5, max_overflow=5)
     engine = create_engine(database_url, **kwargs)
     if database_url.startswith("sqlite"):
 

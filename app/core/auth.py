@@ -247,7 +247,9 @@ def build_auth_router() -> APIRouter:
 
 def bootstrap_demo_user() -> None:
     settings: Settings = get_app_state().settings
-    if settings.environment != "development" or not settings.auto_create_tables:
+    if not settings.auto_create_tables:
+        return
+    if settings.environment != "development" and not settings.seed_demo_user:
         return
     factory = get_app_state().session_factory
     if factory is None:

@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from .config import Settings
-from .db import make_engine, make_session_factory
+from .db import database_backend, make_engine, make_session_factory
 
 
 class AppState:
@@ -24,9 +24,7 @@ class AppState:
             "version": self.settings.app_version,
             "environment": self.settings.environment,
             "ai_mode": self.settings.ai_mode,
-            "database": (
-                "sqlite" if self.settings.database_url.startswith("sqlite") else "other"
-            ),
+            "database": database_backend(self.settings.database_url),
         }
 
 

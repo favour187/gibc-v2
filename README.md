@@ -111,6 +111,17 @@ engine either way.
 `Dockerfile` + `docker compose up --build` serve the built frontend + API.
 CI runs `pytest` (backend) and `tsc + vite build` (frontend) on every push.
 
+
+## Deploy (Render free tier + Neon Postgres)
+
+The repo ships a [`render.yaml`](render.yaml) Blueprint: one Docker web service, no paid add-ons.
+
+1. **Neon** (free): create a project → copy the connection string (`postgresql://…?sslmode=require`).
+2. **Render**: Dashboard → *New* → *Blueprint* → select this repo → when prompted, paste the Neon URL into `DATABASE_URL` → *Apply*.
+3. Open `https://adaptive-learning-studio.onrender.com` (or whatever name Render assigns). Health: `/api/health`. Judges can log in with `demo@example.com / demo-password-123` (`SEED_DEMO_USER=true`).
+
+Notes: `postgres://` and `postgresql://` URLs are auto-mapped to the psycopg 3 driver (`pip install ".[postgres]"`); tables are created on first boot. Free web services sleep after 15 min idle (~1 min cold start) — open the URL a minute before a live demo. Without `DATABASE_URL` the container falls back to SQLite on its ephemeral disk (data resets on restart).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

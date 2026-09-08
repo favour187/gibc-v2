@@ -63,6 +63,7 @@ class Settings:
     trusted_proxy_headers: bool = False
     static_dir: str | None = None
     data_dir: str = "./data"
+    seed_demo_user: bool = False
 
     @classmethod
     def from_env(cls, **overrides: Any) -> "Settings":
@@ -101,6 +102,7 @@ class Settings:
             ),
             static_dir=_env("STATIC_DIR"),
             data_dir=_env("DATA_DIR", cls.data_dir) or cls.data_dir,
+            seed_demo_user=_env_bool("SEED_DEMO_USER", cls.seed_demo_user),
         )
         return cls(**{**kwargs, **overrides})
 
