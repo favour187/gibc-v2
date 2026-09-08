@@ -1,0 +1,27 @@
+name: Health check
+
+on:
+  schedule:
+    - cron: "7-59/10 * * * *"
+  workflow_dispatch:
+
+env:
+  URL: https://adaptive-learning-studio.onrender.com/api/health
+  WINDOW_START: 2026-09-21
+  WINDOW_END: 2026-10-05
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - run: |
+          today=$(date -u +%F)
+          if [[ "$today" < "$WINDOW_START" || "$today" > "$WINDOW_END" ]]; then
+            echo "outside keep-warm window ($today)"
+            exit 0
+          fi
+          for i in 1 2 3 4 5; do
+            curl -fsS --max-time 30 "$URL" && echo || true
+            sleep 110
+          done
