@@ -12,6 +12,10 @@ export function useApi<T>(path: string, deps: unknown[] = []) {
     pathRef.current = path;
     const load = useCallback(async () => {
         abortRef.current?.abort();
+        if (!pathRef.current) {
+            setState({ data: null, error: null, loading: false });
+            return;
+        }
         const controller = new AbortController();
         abortRef.current = controller;
         setState((s) => ({ ...s, loading: true, error: null }));

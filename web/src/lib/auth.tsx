@@ -66,7 +66,7 @@ export function AuthProvider({ children }: {
         setTokenState(null);
         setUser(null);
     }, []);
-    const value = useMemo(() => ({ user, booting: me.loading && !me.data, login, register, logout }), [user, me.loading, me.data, login, register, logout]);
+    const value = useMemo(() => ({ user, booting: !!token && me.loading && !me.data, login, register, logout }), [user, token, me.loading, me.data, login, register, logout]);
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 export function useAuth(): AuthContextValue {
