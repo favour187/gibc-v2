@@ -147,7 +147,7 @@ def tutor(
     result = gateway.chat(
         system=ai_skills.SYSTEM_PROMPT,
         user=message,
-        max_tokens=420,
+        max_tokens=1000,
     )
     return {
         "reply": result.text,
