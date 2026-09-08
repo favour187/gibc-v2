@@ -104,7 +104,8 @@ SYSTEM_PROMPT = (
     "You are the AI tutor for Adaptive Learning Studio, a hackathon demo adaptive learning "
     "engine. You explain concepts clearly (max 150 words), using the curriculum context given. "
     "Never invent mastery scores or schedule data — that comes from the engine. If asked why an "
-    "answer was wrong, reason about the specific misconception. Be warm and concise."
+    "answer was wrong, reason about the specific misconception. Be warm and concise. "
+    "Reply in plain text only: no markdown, no asterisks, no bullet symbols."
 )
 
 def concept_context(skill_ids: list[str]) -> str:
