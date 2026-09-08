@@ -19,7 +19,6 @@ from app.features.learning.core import (
 
 SESSION_SIZE = 8
 
-
 @dataclass(slots=True)
 class SessionQuestion:
     question: Question
@@ -35,7 +34,6 @@ class SessionQuestion:
             "source": self.source,
         }
 
-
 @dataclass(slots=True)
 class Session:
     questions: list[SessionQuestion]
@@ -44,7 +42,6 @@ class Session:
     @property
     def question_count(self) -> int:
         return len(self.questions)
-
 
 def assemble_session(
     skills: dict[str, Skill],
@@ -106,16 +103,13 @@ def assemble_session(
     titles = {sid: skills[sid].title for sid in used_skills}
     return Session(questions=picked, skill_title=titles)
 
-
 def picked_ids(items: list[SessionQuestion]) -> set[str]:
     return {q.question.question_id for q in items}
-
 
 def skills_knowledge_bank(skill_id: str) -> list[Question]:
     from app.features.learning.content import questions_for
 
     return questions_for(skill_id)
-
 
 @dataclass(slots=True)
 class AnswerRecord:
@@ -141,7 +135,6 @@ class AnswerRecord:
             "interval_days_after": round(self.interval_days_after, 2),
             "due_date_after": self.due_date_after.isoformat(),
         }
-
 
 def grade_answer(
     state: SkillState,

@@ -9,26 +9,21 @@ from app.features.learning import service
 
 router = APIRouter(prefix="/learning", tags=["learning"])
 
-
 class GradeIn(BaseModel):
     question_id: str = Field(min_length=1)
     chosen_index: int = Field(ge=0, le=5)
     self_rating: int | None = Field(default=None, ge=1, le=5)
 
-
 class SessionFinishIn(BaseModel):
     question_count: int = Field(ge=0)
     correct_count: int = Field(ge=0)
-
 
 class TutorIn(BaseModel):
     message: str = Field(min_length=1, max_length=800)
     question_id: str | None = None
 
-
 class TargetIn(BaseModel):
     skill_id: str = Field(min_length=1)
-
 
 @router.get("/overview")
 def overview(
@@ -37,14 +32,12 @@ def overview(
 ) -> dict:
     return service.overview(db, str(user.id))
 
-
 @router.get("/session")
 def session(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
     return service.new_session(db, str(user.id))
-
 
 @router.post("/grade")
 def grade(
@@ -63,7 +56,6 @@ def grade(
     except ValueError as exc:
         raise ValidationFailedError(str(exc)) from exc
 
-
 @router.post("/session/finish")
 def finish(
     payload: SessionFinishIn,
@@ -77,7 +69,6 @@ def finish(
         correct_count=payload.correct_count,
     )
 
-
 @router.post("/tutor")
 def tutor(
     payload: TutorIn,
@@ -87,7 +78,6 @@ def tutor(
     return service.tutor(
         db, str(user.id), message=payload.message, question_id=payload.question_id
     )
-
 
 @router.patch("/target")
 def set_target(

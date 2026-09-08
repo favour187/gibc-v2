@@ -10,12 +10,10 @@ from .logging import get_logger
 
 logger = get_logger("app.ai")
 
-
 @dataclass(frozen=True, slots=True)
 class AIMessage:
     role: str
     content: str
-
 
 @dataclass(frozen=True, slots=True)
 class AIResult:
@@ -33,7 +31,6 @@ class AIResult:
             "latency_ms": round(self.latency_ms, 1),
             "cached": self.cached,
         }
-
 
 class AIProvider(Protocol):
     name: str
@@ -119,7 +116,6 @@ class OpenAICompatibleProvider:
         assert last_error is not None
         raise last_error
 
-
 class LocalSkill(Protocol):
     id: str
 
@@ -142,7 +138,6 @@ class _DefaultSkill:
             f"AI_BASE_URL / AI_API_KEY / AI_MODEL to enable the real LLM.]\n\n"
             f'Understood. Here is a concrete next step for: "{user_text [:220 ]}"'
         )
-
 
 class LocalDemoProvider:
     name = "local-demo"
@@ -175,12 +170,10 @@ class LocalDemoProvider:
                     continue
         return _DefaultSkill().respond(user, system, context)
 
-
 @dataclass(slots=True)
 class _CacheEntry:
     expires_at: float
     result: AIResult
-
 
 class AIGateway:
     def __init__(
@@ -317,16 +310,13 @@ class AIGateway:
             "model": self.settings.ai_model,
         }
 
-
 _shared_gateway: AIGateway | None = None
-
 
 def install_gateway(
     settings: Settings, *, local_skills: Sequence[LocalSkill] | None = None
 ) -> None:
     global _shared_gateway
     _shared_gateway = AIGateway(settings, local_skills=local_skills)
-
 
 def get_gateway() -> AIGateway:
     if _shared_gateway is None:

@@ -104,8 +104,8 @@ engine either way.
   unit-tested. Replacing them with IRT/BKT or a full SM-2 implementation is a
   drop-in change.
 - **AI disclosure:** development used AI coding tools (Claude-based agent
-  tooling on the Arena.ai platform), disclosed per the rules (see
-  `docs/COMPLIANCE.md`). All AI-assisted code was reviewed by the author, and
+  tooling on the Arena.ai platform), disclosed per the rules).
+  All AI-assisted code was reviewed by the author, and
   the core learning logic is deterministic, human-reviewed, tested code.
 
 ## Deployment

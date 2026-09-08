@@ -8,15 +8,12 @@ from typing import Any
 DIFFICULTY_MIN = 0.10
 DIFFICULTY_MAX = 0.90
 
-
 def difficulty_scaled(level: int) -> float:
     level = max(1, min(5, int(level)))
     return DIFFICULTY_MIN + (level - 1) * (DIFFICULTY_MAX - DIFFICULTY_MIN) / 4.0
 
-
 def mastery_from_theta(theta: float) -> float:
     return round(100.0 / (1.0 + math.exp(-theta)), 1)
-
 
 @dataclass(frozen=True, slots=True)
 class Skill:
@@ -27,7 +24,6 @@ class Skill:
     concept: str
     difficulty: int
     prerequisites: tuple[str, ...] = ()
-
 
 @dataclass(frozen=True, slots=True)
 class Question:
@@ -40,13 +36,11 @@ class Question:
     explanation: str
     misconception: str = ""
 
-
 class Grade(IntEnum):
     WRONG = 1
     HARD_RIGHT = 3
     RIGHT = 4
     EASY_RIGHT = 5
-
 
 @dataclass(slots=True)
 class SkillState:
@@ -84,10 +78,8 @@ class SkillState:
             "last_grade": self.last_grade,
         }
 
-
 def expected_correct(theta: float, difficulty: float) -> float:
     return 1.0 / (1.0 + math.exp(-(theta - difficulty)))
-
 
 def update_mastery(
     state: SkillState, difficulty: float, correct: bool, *, k: float = 0.6
@@ -100,9 +92,7 @@ def update_mastery(
         state.correct += 1
     return state
 
-
 INTERVALS = (1, 3, 7, 14, 30, 60)
-
 
 def apply_grade(
     state: SkillState, grade: Grade, *, today: date | None = None
@@ -123,7 +113,6 @@ def apply_grade(
     state.due_date = today + timedelta(days=state.interval_days)
     return state
 
-
 def grade_for_answer(correct: bool, *, self_rating: int | None = None) -> Grade:
     if self_rating is not None and self_rating >= 1:
         if not correct:
@@ -136,7 +125,6 @@ def grade_for_answer(correct: bool, *, self_rating: int | None = None) -> Grade:
             5: Grade.EASY_RIGHT,
         }[min(self_rating, 5)]
     return Grade.RIGHT if correct else Grade.WRONG
-
 
 def topological_order(skills: dict[str, Skill]) -> list[str]:
     indegree: dict[str, int] = {sid: len(s.prerequisites) for sid, s in skills.items()}
@@ -156,7 +144,6 @@ def topological_order(skills: dict[str, Skill]) -> list[str]:
                 ready.sort()
     return order
 
-
 def frontier(skills: dict[str, Skill], states: dict[str, SkillState]) -> list[str]:
     ok: list[str] = []
     for sid, skill in skills.items():
@@ -170,7 +157,6 @@ def frontier(skills: dict[str, Skill], states: dict[str, SkillState]) -> list[st
         if not skill.prerequisites or prereq_ok:
             ok.append(sid)
     return sorted(ok)
-
 
 def next_best_skill(
     skills: dict[str, Skill],
@@ -197,7 +183,6 @@ def next_best_skill(
             )
     return min(cand, key=lambda c: states.get(c).mastery if states.get(c) else 0.0)
 
-
 def path_progress(
     skills: dict[str, Skill], states: dict[str, SkillState]
 ) -> dict[str, Any]:
@@ -220,7 +205,6 @@ def path_progress(
         "not_started": total - mastered - in_progress,
         "average_mastery": average,
     }
-
 
 def due_skills(
     states: dict[str, SkillState], *, today: date | None = None

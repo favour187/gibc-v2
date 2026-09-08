@@ -24,7 +24,6 @@ logger = get_logger("app.auth")
 _ALGO = "pbkdf2_sha256"
 _HEADER_PREFIX = "Bearer "
 
-
 def hash_password(password: str, *, iterations: int | None = None) -> str:
     if iterations is None:
         try:
@@ -34,7 +33,6 @@ def hash_password(password: str, *, iterations: int | None = None) -> str:
     salt = secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
     return f"{_ALGO }${iterations }${base64 .b64encode (salt ).decode ()}${base64 .b64encode (digest ).decode ()}"
-
 
 def verify_password(password: str, stored: str) -> bool:
     try:
@@ -51,7 +49,6 @@ def verify_password(password: str, stored: str) -> bool:
     )
     return hmac.compare_digest(candidate, expected)
 
-
 class User(UUIDMixin, TimestampsMixin, Base):
     __tablename__ = "users"
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
@@ -67,31 +64,25 @@ class User(UUIDMixin, TimestampsMixin, Base):
             "created_at": iso_utc(self.created_at),
         }
 
-
 class UserSession(UUIDMixin, Base):
     __tablename__ = "user_sessions"
     user_id: Mapped[uuid_mod.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(index=True)
 
-
 def sha256_hex(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
-
 _EMAIL_RE = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
-
 
 class RegisterIn(BaseModel):
     email: str = Field(min_length=3, max_length=320, pattern=_EMAIL_RE)
     display_name: str = Field(min_length=1, max_length=120)
     password: str = Field(min_length=8, max_length=128)
 
-
 class LoginIn(BaseModel):
     email: str = Field(min_length=3, max_length=320)
     password: str = Field(min_length=1, max_length=128)
-
 
 class UserOut(BaseModel):
     id: str
@@ -99,26 +90,21 @@ class UserOut(BaseModel):
     display_name: str
     created_at: str | None = None
 
-
 class SessionOut(BaseModel):
     token: str
     expires_at: str
     user: UserOut
 
-
 def _make_session_token() -> str:
     return secrets.token_urlsafe(32)
 
-
 def _session_expiry(settings: Settings) -> datetime:
     return utcnow() + timedelta(hours=settings.session_ttl_hours)
-
 
 def _purge_expired_sessions(session: Session) -> None:
     from sqlalchemy import delete
 
     session.execute(delete(UserSession).where(UserSession.expires_at < utcnow()))
-
 
 def register_user(db: Session, email: str, display_name: str, password: str) -> User:
     email = email.strip().lower()
@@ -138,7 +124,6 @@ def register_user(db: Session, email: str, display_name: str, password: str) -> 
     logger.info("Registered user %s (%s)", user.id, email)
     return user
 
-
 def authenticate(db: Session, email: str, password: str) -> User:
     user = db.scalar(select(User).where(User.email == email.strip().lower()))
     if user is None or not verify_password(password, user.password_hash):
@@ -148,7 +133,6 @@ def authenticate(db: Session, email: str, password: str) -> User:
     if not user.is_active:
         raise PermissionDeniedError("This account is disabled.")
     return user
-
 
 def create_session(db: Session, user: User) -> tuple[str, datetime]:
     _purge_expired_sessions(db)
@@ -160,7 +144,6 @@ def create_session(db: Session, user: User) -> tuple[str, datetime]:
     )
     db.commit()
     return token, expiry
-
 
 def resolve_token(db: Session, token: str) -> User:
     if not token:
@@ -182,13 +165,11 @@ def resolve_token(db: Session, token: str) -> User:
         )
     return user
 
-
 def revoke_session(db: Session, token: str) -> None:
     from sqlalchemy import delete
 
     db.execute(delete(UserSession).where(UserSession.token_hash == sha256_hex(token)))
     db.commit()
-
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     header = request.headers.get("authorization", "")
@@ -198,12 +179,10 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
         token = ""
     return resolve_token(db, token)
 
-
 def require_active_user(user: User = Depends(get_current_user)) -> User:
     if not user.is_active:
         raise PermissionDeniedError("This account is disabled.")
     return user
-
 
 def build_auth_router() -> APIRouter:
     def _user_out(user: User) -> UserOut:
@@ -243,7 +222,6 @@ def build_auth_router() -> APIRouter:
         return _user_out(user)
 
     return router
-
 
 def bootstrap_demo_user() -> None:
     settings: Settings = get_app_state().settings

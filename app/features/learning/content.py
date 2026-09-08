@@ -156,14 +156,11 @@ SKILLS: dict[str, Skill] = {
     ),
 }
 
-
 def questions_for(skill_id: str) -> list[Question]:
     return [q for q in QUESTION_BANK if q.skill_id == skill_id]
 
-
 def question_by_id(question_id: str) -> Question | None:
     return next((q for q in QUESTION_BANK if q.question_id == question_id), None)
-
 
 QUESTION_BANK: list[Question] = [
     Question(

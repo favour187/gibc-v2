@@ -7,7 +7,6 @@ from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 from app.core.db import Base, TimestampsMixin, UUIDMixin, iso_utc, utcnow
 from app.features.learning.core import SkillState
 
-
 class StudyProfile(UUIDMixin, TimestampsMixin, Base):
     __tablename__ = "learning_profiles"
     user_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
@@ -25,7 +24,6 @@ class StudyProfile(UUIDMixin, TimestampsMixin, Base):
             "started_at": iso_utc(self.started_at),
             "states": [s.to_dict() for s in self.states],
         }
-
 
 class SkillProgress(UUIDMixin, Base):
     __tablename__ = "learning_progress"
@@ -66,7 +64,6 @@ class SkillProgress(UUIDMixin, Base):
     def to_dict(self) -> dict[str, Any]:
         return self.to_state().to_dict()
 
-
 class StudySessionEntity(UUIDMixin, Base):
     __tablename__ = "learning_sessions"
     profile_id: Mapped[str] = mapped_column(String(64), index=True)
@@ -90,7 +87,6 @@ class StudySessionEntity(UUIDMixin, Base):
             ),
         }
 
-
 class AttemptEntity(UUIDMixin, Base):
     __tablename__ = "learning_attempts"
     profile_id: Mapped[str] = mapped_column(String(64), index=True)
@@ -103,7 +99,6 @@ class AttemptEntity(UUIDMixin, Base):
     theta_after: Mapped[float] = mapped_column(default=0.0)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
-
 def get_or_create_profile(db: Session, user_id: str) -> StudyProfile:
     profile = db.scalar(select(StudyProfile).where(StudyProfile.user_id == user_id))
     if profile is None:
@@ -113,7 +108,6 @@ def get_or_create_profile(db: Session, user_id: str) -> StudyProfile:
         db.refresh(profile)
     return profile
 
-
 def get_progress(
     db: Session, profile_id: uuid.UUID, skill_id: str
 ) -> SkillProgress | None:
@@ -122,7 +116,6 @@ def get_progress(
             SkillProgress.profile_id == profile_id, SkillProgress.skill_id == skill_id
         )
     )
-
 
 def upsert_progress(
     db: Session, profile_id: uuid.UUID, state: SkillState
@@ -136,13 +129,11 @@ def upsert_progress(
     db.refresh(row)
     return row
 
-
 def all_states(db: Session, profile_id: uuid.UUID) -> dict[str, SkillState]:
     rows = db.scalars(
         select(SkillProgress).where(SkillProgress.profile_id == profile_id)
     )
     return {r.skill_id: r.to_state() for r in rows}
-
 
 def record_session(
     db: Session, profile_id: str, data: dict[str, Any]
@@ -159,7 +150,6 @@ def record_session(
     db.commit()
     db.refresh(session)
     return session
-
 
 def record_attempt(
     db: Session, profile_id: str, session_id: str, record: dict[str, Any]
@@ -179,10 +169,7 @@ def record_attempt(
     db.refresh(attempt)
     return attempt
 
-
 def study_streak(db: Session, profile_id: uuid.UUID | str) -> int:
-    # learning_attempts.profile_id is a String column: compare as text so the query is
-    # valid on PostgreSQL as well as SQLite (which coerces silently).
     rows = db.scalars(
         select(AttemptEntity.created_at).where(
             AttemptEntity.profile_id == str(profile_id)
@@ -197,7 +184,6 @@ def study_streak(db: Session, profile_id: uuid.UUID | str) -> int:
         streak += 1
         cursor -= timedelta(days=1)
     return streak
-
 
 def review_queue_size(db: Session, profile_id: uuid.UUID) -> int:
     rows = db.scalars(

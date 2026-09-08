@@ -6,7 +6,6 @@ from sqlalchemy.orm import sessionmaker
 from .config import Settings
 from .db import database_backend, make_engine, make_session_factory
 
-
 class AppState:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -27,14 +26,11 @@ class AppState:
             "database": database_backend(self.settings.database_url),
         }
 
-
 app_state: AppState | None = None
-
 
 def set_app_state(state: AppState) -> None:
     global app_state
     app_state = state
-
 
 def get_app_state() -> AppState:
     if app_state is None:

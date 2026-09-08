@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from .config import Settings
 from .http import create_app
 
-
 def make_settings(**overrides) -> Settings:
     tmpdir = Path(tempfile.mkdtemp(prefix="hackathon-test-"))
     base = dict(
@@ -23,14 +22,11 @@ def make_settings(**overrides) -> Settings:
     base.update(overrides)
     return Settings(**base)
 
-
 def build_test_app(**overrides) -> FastAPI:
     return create_app(make_settings(**overrides))
 
-
 def make_test_client(**overrides) -> TestClient:
     return TestClient(build_test_app(**overrides))
-
 
 def create_user(
     client: TestClient,
@@ -42,7 +38,6 @@ def create_user(
     response = client.post("/api/auth/register", json=payload)
     assert response.status_code == 201, response.text
     return response.json()
-
 
 def auth_headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token }"}

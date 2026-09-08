@@ -18,7 +18,6 @@ from .state import AppState, get_app_state, set_app_state
 
 logger = get_logger("app.http")
 
-
 class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("x-request-id", "")
@@ -30,7 +29,6 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
-
 
 def create_app(
     settings: Settings,

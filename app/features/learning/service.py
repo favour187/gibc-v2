@@ -26,10 +26,8 @@ from app.features.learning.repository import (
     upsert_progress,
 )
 
-
 def _state_map(db: Session, profile: StudyProfile) -> dict[str, SkillState]:
     return all_states(db, profile.id)
-
 
 def overview(db: Session, user_id: str) -> dict[str, Any]:
     profile = get_or_create_profile(db, user_id)
@@ -72,7 +70,6 @@ def overview(db: Session, user_id: str) -> dict[str, Any]:
         "state_map": {sid: st.to_dict() for sid, st in states.items()},
     }
 
-
 def new_session(
     db: Session, user_id: str, *, target_skill: str | None = None
 ) -> dict[str, Any]:
@@ -88,7 +85,6 @@ def new_session(
         "count": session.question_count,
         "skill_titles": session.skill_title,
     }
-
 
 def grade(
     db: Session,
@@ -120,7 +116,6 @@ def grade(
         "skill_title": SKILLS[question.skill_id].title,
     }
 
-
 def finish_session(
     db: Session, user_id: str, *, question_count: int, correct_count: int
 ) -> dict[str, Any]:
@@ -135,7 +130,6 @@ def finish_session(
         },
     )
     return session.to_dict()
-
 
 def tutor(
     db: Session,
@@ -162,7 +156,6 @@ def tutor(
         "due_count": len(due),
         "frontier_count": len(front),
     }
-
 
 def set_target(db: Session, user_id: str, skill_id: str) -> dict[str, Any]:
     if skill_id not in SKILLS:

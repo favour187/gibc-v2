@@ -7,21 +7,17 @@ from typing import Any
 _TRUE = {"1", "true", "yes", "on", "y"}
 _FALSE = {"0", "false", "no", "off", "n"}
 
-
 def _env(name: str, default: str | None = None) -> str | None:
     value = os.environ.get(name)
     return default if value is None or value == "" else value
-
 
 def _env_int(name: str, default: int) -> int:
     value = _env(name)
     return int(value) if value is not None else default
 
-
 def _env_float(name: str, default: float) -> float:
     value = _env(name)
     return float(value) if value is not None else default
-
 
 def _env_bool(name: str, default: bool = False) -> bool:
     value = _env(name)
@@ -29,13 +25,11 @@ def _env_bool(name: str, default: bool = False) -> bool:
         return default
     return value.strip().lower() in _TRUE
 
-
 def _env_list(name: str, default: tuple[str, ...] = ()) -> tuple[str, ...]:
     value = _env(name)
     if value is None:
         return default
     return tuple(item.strip() for item in value.split(",") if item.strip())
-
 
 @dataclass(frozen=True)
 class Settings:

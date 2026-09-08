@@ -11,10 +11,8 @@ from .logging import get_logger
 
 logger = get_logger("app.db")
 
-
 def utcnow() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
-
 
 def iso_utc(dt: datetime | None) -> str | None:
     if dt is None:
@@ -24,14 +22,11 @@ def iso_utc(dt: datetime | None) -> str | None:
         return text if text.endswith("Z") else f"{text }Z"
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
-
 class Base(DeclarativeBase):
     pass
 
-
 class UUIDMixin:
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-
 
 class TimestampsMixin:
     created_at: Mapped[datetime] = mapped_column(
@@ -41,28 +36,21 @@ class TimestampsMixin:
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
 
-
 def _ensure_sqlite_dir(database_url: str) -> None:
     if database_url.startswith("sqlite:///"):
         path = database_url.removeprefix("sqlite:///")
         if path and path != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
 
-
 def normalize_database_url(database_url: str) -> str:
-    """Accept the URL formats hosted Postgres providers hand out (Neon, Render,
-    Supabase, Heroku) and pin them to the psycopg 3 driver this project ships."""
     if database_url.startswith("postgres://"):
         database_url = "postgresql://" + database_url[len("postgres://") :]
     if database_url.startswith("postgresql://"):
         database_url = "postgresql+psycopg://" + database_url[len("postgresql://") :]
     return database_url
 
-
 def database_backend(database_url: str) -> str:
-    """Short backend label for logs / health: 'sqlite', 'postgresql', ..."""
     return normalize_database_url(database_url).split(":", 1)[0].split("+", 1)[0]
-
 
 def make_engine(database_url: str, *, echo: bool = False) -> Engine:
     database_url = normalize_database_url(database_url)
@@ -71,8 +59,6 @@ def make_engine(database_url: str, *, echo: bool = False) -> Engine:
     if database_url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
     else:
-        # Serverless Postgres (Neon, Render) suspends idle computes and drops
-        # connections; pre-ping + recycle keep the pool healthy across wake-ups.
         kwargs.update(pool_pre_ping=True, pool_recycle=300, pool_size=5, max_overflow=5)
     engine = create_engine(database_url, **kwargs)
     if database_url.startswith("sqlite"):
@@ -86,17 +72,14 @@ def make_engine(database_url: str, *, echo: bool = False) -> Engine:
 
     return engine
 
-
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-
 
 def init_db(engine: Engine) -> None:
     from . import auth
 
     Base.metadata.create_all(engine)
     logger.info("Database tables ensured: %s", sorted(Base.metadata.tables))
-
 
 def get_db() -> Iterator[Session]:
     from .state import get_app_state
@@ -106,7 +89,6 @@ def get_db() -> Iterator[Session]:
         raise RuntimeError("Database not initialised (session_factory is None)")
     with factory() as session:
         yield session
-
 
 @contextmanager
 def session_scope(session_factory: sessionmaker[Session]) -> Iterator[Session]:

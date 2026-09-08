@@ -84,14 +84,12 @@ a:hover { text-decoration: underline; }
 button, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-
 .container { max-width: 1040px; margin: 0 auto; padding: var(--space-5); }
 .page { display: grid; gap: var(--space-5); padding: var(--space-6) 0; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); }
 .stack { display: grid; gap: var(--space-4); }
 .row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .spread { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
-
 
 .card {
   background: var(--surface);
@@ -100,7 +98,6 @@ button, input { font: inherit; color: inherit; }
   box-shadow: var(--shadow-sm);
   padding: var(--space-5);
 }
-
 
 .btn {
   display: inline-flex;
@@ -128,7 +125,6 @@ button, input { font: inherit; color: inherit; }
 .btn-md { padding: 9px 16px; font-size: 14px; }
 .btn-lg { padding: 12px 22px; font-size: 15px; }
 
-
 .field { display: grid; gap: var(--space-2); }
 .field-label { font-size: 13px; font-weight: 600; color: var(--text-2); }
 .field-hint { font-size: 12px; color: var(--text-3); margin: 0; }
@@ -143,7 +139,6 @@ button, input { font: inherit; color: inherit; }
 }
 .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .input-error { border-color: var(--danger); }
-
 
 .badge {
   display: inline-flex;
@@ -160,7 +155,6 @@ button, input { font: inherit; color: inherit; }
 .badge-warning { background: var(--warning-soft); color: var(--warning); }
 .badge-danger { background: var(--danger-soft); color: var(--danger); }
 
-
 .progress { display: grid; gap: var(--space-1); }
 .progress-label { font-size: 13px; color: var(--text-2); }
 .progress-track {
@@ -175,7 +169,6 @@ button, input { font: inherit; color: inherit; }
 .progress-fill-warning { background: var(--warning); }
 .progress-fill-danger { background: var(--danger); }
 
-
 .spinner {
   display: inline-block;
   border: 2px solid currentColor;
@@ -185,7 +178,6 @@ button, input { font: inherit; color: inherit; }
   color: inherit;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 
 .modal-backdrop {
   position: fixed;
@@ -234,7 +226,6 @@ button, input { font: inherit; color: inherit; }
   border-top: 1px solid var(--border);
 }
 
-
 .empty-state {
   text-align: center;
   padding: var(--space-7) var(--space-5);
@@ -249,7 +240,6 @@ button, input { font: inherit; color: inherit; }
   padding: var(--space-3) var(--space-4);
   font-size: 14px;
 }
-
 
 .app-header {
   display: flex;

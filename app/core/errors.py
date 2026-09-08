@@ -9,7 +9,6 @@ from .logging import get_logger
 logger = get_logger("app.errors")
 _SENSITIVE = {status.HTTP_500_INTERNAL_SERVER_ERROR}
 
-
 class AppError(Exception):
     status_code: int = status.HTTP_400_BAD_REQUEST
     code: str = "app_error"
@@ -30,44 +29,35 @@ class AppError(Exception):
             self.status_code = status_code
         self.details = details
 
-
 class NotFoundError(AppError):
     status_code = status.HTTP_404_NOT_FOUND
     code = "not_found"
-
 
 class ConflictError(AppError):
     status_code = status.HTTP_409_CONFLICT
     code = "conflict"
 
-
 class AuthenticationError(AppError):
     status_code = status.HTTP_401_UNAUTHORIZED
     code = "unauthenticated"
-
 
 class PermissionDeniedError(AppError):
     status_code = status.HTTP_403_FORBIDDEN
     code = "forbidden"
 
-
 _422 = getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", 422)
-
 
 class ValidationFailedError(AppError):
     status_code = _422
     code = "validation_failed"
 
-
 class RateLimitedError(AppError):
     status_code = status.HTTP_429_TOO_MANY_REQUESTS
     code = "rate_limited"
 
-
 class ServiceUnavailableError(AppError):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     code = "service_unavailable"
-
 
 def error_envelope(
     code: str,
@@ -84,10 +74,8 @@ def error_envelope(
         body["error"]["request_id"] = request_id
     return body
 
-
 def _request_id(request: Request) -> str | None:
     return getattr(request.state, "request_id", None)
-
 
 def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
     @app.exception_handler(AppError)

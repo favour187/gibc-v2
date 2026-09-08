@@ -1,15 +1,9 @@
-# Render Blueprint — deploys Adaptive Learning Studio as one Docker web service (free plan).
-# Database: bring your own Postgres (e.g. Neon free tier) — paste its connection
-# string when the dashboard prompts for DATABASE_URL. Without it the service
-# falls back to SQLite on the ephemeral disk (data resets on every restart).
-#
-# Deploy: Render Dashboard → New → Blueprint → pick this repo → Apply.
 services:
   - type: web
     name: adaptive-learning-studio
     runtime: docker
     plan: free
-    region: frankfurt            # closest Render region to West Africa/Europe; Neon: pick eu-central-1
+    region: frankfurt
     healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
@@ -18,14 +12,14 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        sync: false              # prompted in the dashboard — paste the Neon URL (postgres://…?sslmode=require)
+        sync: false
       - key: SEED_DEMO_USER
-        value: "true"            # creates demo@example.com / demo-password-123 for judges
+        value: "true"
       - key: TRUSTED_PROXY_HEADERS
-        value: "true"            # Render terminates TLS and forwards X-Forwarded-For
+        value: "true"
       - key: RATE_LIMIT_PER_MINUTE
         value: "240"
       - key: AI_MODE
-        value: auto              # local deterministic skills unless AI_API_KEY is set
+        value: auto
       - key: AI_API_KEY
-        sync: false              # optional — leave blank to run fully offline
+        sync: false

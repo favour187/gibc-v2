@@ -4,7 +4,6 @@ from typing import Any
 from app.core.ai import AIMessage, AIProvider, LocalDemoProvider
 from app.features.learning.content import SKILLS, question_by_id
 
-
 class ExplainSkill:
     id = "explain"
 
@@ -36,7 +35,6 @@ class ExplainSkill:
             f"Common misconception: {_common_misconception (skill .skill_id )or 'none recorded for this skill.'}"
         )
 
-
 def _common_misconception(skill_id: str) -> str | None:
     from app.features.learning.content import questions_for
 
@@ -44,7 +42,6 @@ def _common_misconception(skill_id: str) -> str | None:
         if q.misconception:
             return q.misconception
     return None
-
 
 class WrongAnswerSkill:
     id = "wrong-answer"
@@ -76,7 +73,6 @@ class WrongAnswerSkill:
             f"Why: {question .explanation }"
         )
 
-
 class StudyTipSkill:
     id = "study-tip"
 
@@ -99,13 +95,10 @@ class StudyTipSkill:
             f"engine keeps the tricky items coming back at the right time."
         )
 
-
 LOCAL_SKILLS: list[Any] = [ExplainSkill(), WrongAnswerSkill(), StudyTipSkill()]
-
 
 def local_provider() -> AIProvider:
     return LocalDemoProvider(LOCAL_SKILLS)
-
 
 SYSTEM_PROMPT = (
     "You are the AI tutor for Adaptive Learning Studio, a hackathon demo adaptive learning "
@@ -114,7 +107,6 @@ SYSTEM_PROMPT = (
     "answer was wrong, reason about the specific misconception. Be warm and concise."
 )
 
-
 def concept_context(skill_ids: list[str]) -> str:
     parts = []
     for sid in skill_ids:
@@ -122,7 +114,6 @@ def concept_context(skill_ids: list[str]) -> str:
         if s:
             parts.append(f"- {s .title }: {s .concept }")
     return "\n".join(parts) if parts else ""
-
 
 def build_messages(
     user_text: str,

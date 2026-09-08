@@ -6,7 +6,6 @@ from typing import Any
 _FORMAT = "%(asctime)s %(levelname)-7s %(name)s: %(message)s"
 _FIELD_ORDER = ("ts", "level", "logger", "message")
 
-
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {
@@ -22,12 +21,10 @@ class JsonFormatter(logging.Formatter):
             payload.update({k: v for k, v in extra.items() if k not in payload})
         return _json_dumps(payload)
 
-
 def _json_dumps(payload: dict[str, Any]) -> str:
     import json
 
     return json.dumps(payload, default=str)
-
 
 def setup_logging(*, debug: bool = False, json_logs: bool = False) -> None:
     root = logging.getLogger()
@@ -45,7 +42,6 @@ def setup_logging(*, debug: bool = False, json_logs: bool = False) -> None:
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     setattr(root, "_hackathon_configured", True)
-
 
 def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)

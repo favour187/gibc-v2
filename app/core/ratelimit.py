@@ -8,7 +8,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from .errors import error_envelope
 
-
 class SlidingWindowRateLimiter:
     def __init__(self, limit_per_minute: int = 120) -> None:
         self.limit = max(1, int(limit_per_minute))
@@ -29,7 +28,6 @@ class SlidingWindowRateLimiter:
             if len(self._hits) > 10_000:
                 self._hits = defaultdict(deque)
         return True, 0
-
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(
